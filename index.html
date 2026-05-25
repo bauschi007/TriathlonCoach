@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Tri Coach"/>
+<meta name="theme-color" content="#07111c"/>
+<title>Triathlon Coach AI</title>
+
+<!-- PWA Icons (inline SVG as data URL) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%2307111c'/%3E%3Ctext x='90' y='115' font-size='80' text-anchor='middle'%3E🏊%3C/text%3E%3C/svg%3E"/>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#07111c; --bg2:#0f1923; --bg3:#071018;
+  --border:#1e3a52; --accent:#00d4aa; --blue:#4fa3ff;
+  --orange:#ff7b4f; --purple:#c084fc; --red:#ff6b6b;
+  --text:#e2eaf4; --text2:#8aa8c4; --text3:#4a6a8a; --text4:#3a5a74;
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+input,textarea,button,select{font-family:inherit;-webkit-appearance:none;}
+textarea{resize:none;}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+
+/* ── App Shell ── */
+#app{height:100%;display:flex;flex-direction:column;}
+.screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);}
+
+/* ── Setup ── */
+.setup-wrap{display:flex;flex-direction:column;align-items:center;min-height:100%;padding:40px 20px calc(var(--safe-bottom) + 40px);}
+.setup-logo{font-size:52px;letter-spacing:6px;margin-bottom:12px;}
+.setup-title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px;}
+.setup-sub{color:var(--text3);font-size:13px;margin-bottom:28px;}
+.setup-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:420px;}
+.setup-welcome{font-size:17px;font-weight:800;margin-bottom:6px;}
+.setup-desc{color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:18px;}
+.profile-mini{background:var(--bg3);border:1px solid #00d4aa33;border-radius:12px;padding:12px;margin-bottom:18px;}
+.profile-mini-title{color:var(--accent);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
+.profile-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.profile-mini-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 9px;}
+.profile-mini-label{color:var(--text3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.profile-mini-val{color:var(--text);font-size:12px;font-weight:600;margin-top:2px;}
+.key-section{border-radius:12px;padding:13px;margin-bottom:12px;}
+.key-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+.key-hint{font-size:12px;line-height:1.5;margin-bottom:9px;}
+.inp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 13px;color:var(--text);font-size:16px;outline:none;}
+.inp:focus{border-color:var(--blue);}
+.btn-primary{width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--blue));color:#000;font-weight:700;font-size:16px;cursor:pointer;margin-top:14px;letter-spacing:-.01em;}
+.btn-primary:disabled{background:var(--border);color:var(--text3);}
+.err-box{background:#ff6b6b18;border:1px solid #ff6b6b44;border-radius:10px;padding:10px 13px;color:#ff9a9a;font-size:13px;margin-top:10px;line-height:1.5;}
+.security-note{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12px;color:var(--text4);line-height:1.5;}
+
+/* ── Header ── */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 10px) 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.header-left{display:flex;align-items:center;gap:10px;}
+.header-emoji{font-size:22px;}
+.header-title{font-weight:800;font-size:16px;letter-spacing:-.01em;}
+.header-sub{color:var(--text3);font-size:11px;margin-top:1px;}
+.header-right{display:flex;gap:8px;}
+.icon-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text3);border-radius:10px;padding:8px 11px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+
+/* ── Stats ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.stat-card{background:var(--bg2);border-radius:12px;padding:10px 11px;}
+.stat-icon{font-size:16px;margin-bottom:2px;}
+.stat-num{font-weight:800;font-size:19px;}
+.stat-label{color:var(--text3);font-size:10px;}
+.stat-dist{color:#6a8aaa;font-size:10px;margin-top:1px;}
+
+/* ── Tab Bar ── */
+.tabbar{display:flex;background:var(--bg2);border-top:1px solid var(--border);padding:8px 8px calc(var(--safe-bottom) + 8px);flex-shrink:0;}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:none;background:transparent;cursor:pointer;border-radius:10px;transition:background .15s;}
+.tab-item.active{background:#1a2f4540;}
+.tab-icon{font-size:20px;line-height:1;}
+.tab-label{font-size:10px;font-weight:600;color:var(--text3);}
+.tab-item.active .tab-label{color:var(--blue);}
+
+/* ── Content ── */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--safe-bottom) + 80px);}
+
+/* ── Chat ── */
+.chat-wrap{display:flex;flex-direction:column;height:100%;}
+.chat-msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px;padding-bottom:8px;}
+.msg{animation:fadeUp .2s ease;max-width:85%;}
+.msg.user{align-self:flex-end;}
+.msg.coach{align-self:flex-start;}
+.bubble{border-radius:18px;padding:11px 14px;font-size:15px;line-height:1.55;}
+.msg.user .bubble{background:linear-gradient(135deg,#00d4aa22,#4fa3ff33);border:1px solid #4fa3ff44;color:var(--text);border-bottom-right-radius:5px;}
+.msg.coach .bubble{background:var(--bg2);border:1px solid var(--border);color:#b0cce8;border-bottom-left-radius:5px;}
+.msg.coach .bubble h3{color:var(--accent);font-size:14px;margin:10px 0 5px;font-weight:800;}
+.msg.coach .bubble strong{color:var(--text);}
+.msg.coach .bubble li{list-style:none;padding-left:13px;position:relative;margin-bottom:3px;color:#b0cce8;}
+.msg.coach .bubble li::before{content:"›";color:var(--accent);position:absolute;left:0;}
+.msg.coach .bubble p{margin:2px 0;color:#b0cce8;}
+.msg-time{font-size:10px;color:var(--text4);margin-top:3px;padding:0 4px;}
+.msg.user .msg-time{text-align:right;}
+.typing-bubble{background:var(--bg2);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:5px;padding:13px 16px;align-self:flex-start;animation:fadeUp .2s ease;}
+.dots{display:flex;gap:5px;align-items:center;}
+.dots span{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:pulse 1.2s ease-in-out infinite;}
+.dots span:nth-child(2){animation-delay:.2s;}
+.dots span:nth-child(3){animation-delay:.4s;}
+.suggestions{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.suggestion{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:7px 13px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.suggestion:active{border-color:var(--accent);color:var(--accent);}
+.chat-input-bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:10px 14px calc(var(--safe-bottom) + 10px);display:flex;gap:8px;align-items:flex-end;}
+.chat-ta{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:10px 14px;color:var(--text);font-size:16px;outline:none;max-height:100px;overflow-y:auto;line-height:1.4;}
+.chat-ta:focus{border-color:var(--blue);}
+.send-btn{background:linear-gradient(135deg,var(--accent),var(--blue));border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;color:#000;}
+.send-btn:disabled{background:var(--border);}
+
+/* ── Activities ── */
+.act-item{background:var(--bg2);border:1px solid #1a2f45;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.act-icon{font-size:24px;min-width:32px;text-align:center;}
+.act-name{font-weight:600;font-size:14px;color:#dde8f4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.act-meta{color:var(--text4);font-size:11px;margin-top:2px;}
+.act-dist{color:var(--accent);font-weight:700;font-size:14px;}
+.act-dur{color:var(--text4);font-size:11px;}
+.act-pace{color:var(--text2);font-size:12px;}
+.act-hr{color:var(--orange);font-size:11px;}
+
+/* ── Goals ── */
+.add-goal-btn{width:100%;background:transparent;border:2px dashed var(--border);color:var(--text3);border-radius:14px;padding:16px;cursor:pointer;font-size:15px;margin-bottom:12px;}
+.goal-card{background:var(--bg2);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.goal-dists{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:9px;}
+.goal-dist-item{background:var(--bg3);border-radius:8px;padding:5px 3px;text-align:center;}
+.goal-pill{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text2);display:inline-block;margin-right:5px;margin-top:3px;}
+
+/* ── Profile ── */
+.profile-row{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);}
+.profile-key{color:var(--text3);font-size:12px;min-width:110px;flex-shrink:0;}
+.profile-val{color:var(--text);font-size:12px;}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:flex-end;justify-content:center;}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:24px 20px calc(var(--safe-bottom) + 24px);width:100%;max-height:90vh;overflow-y:auto;animation:slideIn .25s ease;}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:14px;}
+.format-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.format-btn{border-radius:12px;padding:10px;cursor:pointer;text-align:left;border:1.5px solid var(--border);background:var(--bg3);transition:all .15s;}
+.format-emoji{font-size:18px;margin-bottom:3px;}
+.format-label{font-size:13px;font-weight:700;}
+.format-desc{color:var(--text4);font-size:11px;margin-top:1px;}
+.dists-preview{background:var(--bg3);border-radius:10px;padding:9px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;text-align:center;}
+.modal-actions{display:flex;gap:8px;margin-top:6px;}
+.btn-cancel{flex:1;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:12px;padding:13px;cursor:pointer;font-size:14px;}
+.btn-save{flex:2;border:none;border-radius:12px;padding:13px;cursor:pointer;font-size:14px;font-weight:700;}
+.field-label{display:block;color:var(--text3);font-size:11px;font-weight:700;margin-bottom:5px;margin-top:12px;letter-spacing:.06em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ─── Athlete Profile ──────────────────────────────────────────────────────────
+const P = {
+  age:"40–50 Jahre", gender:"Männlich", exp:"Erfahren (5+ Jahre)",
+  dist:"Olympische Distanz", weak:"Schwimmen",
+  ctrl:"HF, Leistungsmesser (Watt), Pace",
+  rec:"Sehr gut (7–8h)", inj:"Leichte (ausgeheilt)",
+  goals:"Gesamtzeit + alle Disziplinen verbessern", mode:"Alleine",
+};
+
+const FORMATS = {
+  sprint:  {label:"Sprint",               emoji:"⚡", swim:750,  bike:20000,  run:5000,  desc:"750m·20km·5km",    color:"#00d4aa"},
+  olympic: {label:"Olympische Distanz",   emoji:"🏅", swim:1500, bike:40000,  run:10000, desc:"1,5km·40km·10km",  color:"#4fa3ff"},
+  half:    {label:"Mitteldistanz (70.3)", emoji:"🔥", swim:1900, bike:90000,  run:21100, desc:"1,9km·90km·21km",  color:"#ff7b4f"},
+  full:    {label:"Ironman",              emoji:"💎", swim:3800, bike:180000, run:42200, desc:"3,8km·180km·42km", color:"#c084fc"},
+};
+
+const SUGGESTIONS = [
+  "📅 Erstell mir einen Wochenplan",
+  "🏊 Wie verbessere ich mein Schwimmen?",
+  "❤️ Welche HF-Zonen soll ich nutzen?",
+  "⏱ Wie lange vor dem Wettkampf tapern?",
+  "😴 Ich bin müde – heute trainieren?",
+  "🍽️ Ernährung rund ums Training?",
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const LS = {
+  get: k => { try { return localStorage.getItem(k)||""; } catch(e){ return ""; }},
+  set: (k,v) => { try { localStorage.setItem(k,v); } catch(e){} },
+};
+
+let S = {
+  screen: "setup",
+  anthropicKey: LS.get("ak"),
+  refreshToken: LS.get("rt"),
+  clientId: "246116",
+  clientSecret: "1fe125ff3aab7915106c53167bb9fcb382ff9c96",
+  athlete: null, activities: [], goals: [],
+  tab: "chat", loading: false, error: "",
+  showGoalForm: false,
+  gf: {name:"",format:"olympic",date:"",targetTime:"",notes:""},
+  refreshing: false,
+  msgs: [], chatInput: "", chatLoading: false,
+};
+
+function set(patch){ Object.assign(S,patch); render(); }
+
+// ─── Strava API ───────────────────────────────────────────────────────────────
+async function getToken(){
+  const r=await fetch("https://www.strava.com/oauth/token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({client_id:S.clientId,client_secret:S.clientSecret,refresh_token:S.refreshToken,grant_type:"refresh_token"})});
+  const d=await r.json();
+  if(!d.access_token)throw new Error(d.message||"Strava Token ungültig");
+  return d.access_token;
+}
+async function stravaGet(path,token){
+  const r=await fetch(`https://www.strava.com/api/v3${path}`,{headers:{Authorization:`Bearer ${token}`}});
+  if(!r.ok)throw new Error("Strava: "+r.status);
+  return r.json();
+}
+
+async function connect(){
+  if(!S.anthropicKey.trim()){set({error:"Bitte Anthropic API Key eingeben."});return;}
+  if(!S.refreshToken.trim()){set({error:"Bitte Refresh Token eingeben."});return;}
+  set({loading:true,error:""});
+  try{
+    LS.set("ak",S.anthropicKey.trim());
+    LS.set("rt",S.refreshToken.trim());
+    const tok=await getToken();
+    const [ath,acts]=await Promise.all([stravaGet("/athlete",tok),stravaGet("/athlete/activities?per_page=40",tok)]);
+    const d=disc(acts.filter(isTri));
+    const welcome=`Hallo ${ath.firstname}! 👋 Ich bin dein persönlicher Triathlon-Coach.\n\nIch habe deine Strava-Daten geladen:\n• 🏊 **${d.swim.length} Schwimmeinheiten** (${fd(d.swim.reduce((s,a)=>s+(a.distance||0),0))})\n• 🚴 **${d.bike.length} Radeinheiten** (${fd(d.bike.reduce((s,a)=>s+(a.distance||0),0))})\n• 🏃 **${d.run.length} Laufeinheiten** (${fd(d.run.reduce((s,a)=>s+(a.distance||0),0))})\n\nIch kenne dein Profil und bin bereit dich zu coachen. **Was möchtest du wissen?**`;
+    set({athlete:ath,activities:acts,screen:"dashboard",loading:false,msgs:[{r:"coach",t:welcome,ts:ts()}]});
+  }catch(e){set({loading:false,error:e.message});}
+}
+
+async function doRefresh(){
+  set({refreshing:true});
+  try{const tok=await getToken();const[ath,acts]=await Promise.all([stravaGet("/athlete",tok),stravaGet("/athlete/activities?per_page=40",tok)]);set({athlete:ath,activities:acts,refreshing:false});}
+  catch(e){set({refreshing:false});}
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+function sysPrompt(){
+  const d=disc(S.activities.filter(isTri));
+  const sum=(arr,l)=>{if(!arr.length)return`${l}: Keine Daten.`;const di=arr.reduce((s,a)=>s+(a.distance||0),0),ti=arr.reduce((s,a)=>s+(a.moving_time||0),0),hr=arr.filter(a=>a.average_heartrate);return`${l}: ${arr.length}x | ${fd(di)} | ${fdu(ti)}${hr.length?` | Ø HF ${Math.round(hr.reduce((s,a)=>s+a.average_heartrate,0)/hr.length)} bpm`:""}`;};
+  const gt=S.goals.length===0?"Keine Ziele.":S.goals.map(g=>{const f=FORMATS[g.format];const w=g.date?Math.max(0,Math.round((new Date(g.date)-new Date())/(7*24*3600*1000))):null;return`• ${f.label} "${g.name}"${g.date?` (${w}W)`:""}${g.targetTime?` Ziel:${g.targetTime}`:""}`}).join("\n");
+  return`Du bist Klaus' persönlicher Triathlon-Coach. Antworte auf Deutsch, direkt und motivierend wie ein echter Coach.
+
+ATHLET: ${S.athlete?.firstname} ${S.athlete?.lastname}
+Alter:${P.age} | Erfahrung:${P.exp} | Ziel:${P.dist} | Schwach:${P.weak}
+Steuerung:${P.ctrl} | Erholung:${P.rec} | Verletzung:${P.inj}
+Training:${P.mode} | Ziele:${P.goals}
+
+STRAVA:
+${sum(d.swim,"🏊 Swim")}
+${sum(d.bike,"🚴 Bike")}
+${sum(d.run,"🏃 Run")}
+
+WETTKAMPFZIELE: ${gt}
+
+Nutze **Fettschrift**. Halte Antworten prägnant (max 8 Sätze außer bei Wochenplänen). Sprich Klaus direkt an.`;
+}
+
+async function send(txt){
+  if(!txt||!txt.trim()||S.chatLoading)return;
+  const um={r:"user",t:txt.trim(),ts:ts()};
+  S.msgs=[...S.msgs,um];
+  set({chatLoading:true,chatInput:""});
+  scrollMsgs();
+  const hist=S.msgs.slice(-12).map(m=>({role:m.r==="user"?"user":"assistant",content:m.t}));
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":S.anthropicKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1000,system:sysPrompt(),messages:hist})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    S.msgs=[...S.msgs,{r:"coach",t:data.content?.[0]?.text||"...",ts:ts()}];
+    set({chatLoading:false});
+    scrollMsgs();
+  }catch(e){
+    S.msgs=[...S.msgs,{r:"coach",t:`⚠️ ${e.message}`,ts:ts()}];
+    set({chatLoading:false});
+  }
+}
+
+function scrollMsgs(){setTimeout(()=>{const el=document.getElementById("msgs");if(el)el.scrollTop=el.scrollHeight;},60);}
+const ts=()=>new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const fd=m=>!m?"–":m>=1000?`${(m/1000).toFixed(1)}km`:`${Math.round(m)}m`;
+const fdu=s=>{if(!s)return"–";const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?`${h}h${m}m`:`${m}min`;};
+const fdate=s=>new Date(s).toLocaleDateString("de-DE",{day:"2-digit",month:"short"});
+const icon=t=>{t=(t||"").toLowerCase();return t.includes("swim")?"🏊":t.includes("ride")||t.includes("cycl")||t.includes("bike")?"🚴":t.includes("run")?"🏃":"⚡";};
+const slabel=t=>{t=(t||"").toLowerCase();return t.includes("swim")?"Swim":t.includes("ride")||t.includes("cycl")?"Bike":t.includes("run")?"Run":t;};
+const pace=a=>{const t=(a.sport_type||a.type||"").toLowerCase();if(!a.distance||!a.moving_time)return"–";if(t.includes("swim")){const s=a.moving_time/(a.distance/100);return`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,"0")}/100m`;}if(t.includes("run")){const s=a.moving_time/(a.distance/1000);return`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,"0")}/km`;}return`${((a.distance/1000)/(a.moving_time/3600)).toFixed(1)}km/h`;};
+const isTri=a=>{const t=(a.sport_type||a.type||"").toLowerCase();return t.includes("swim")||t.includes("ride")||t.includes("cycl")||t.includes("run");};
+const disc=acts=>({
+  swim:acts.filter(a=>(a.sport_type||a.type||"").toLowerCase().includes("swim")),
+  bike:acts.filter(a=>{const t=(a.sport_type||a.type||"").toLowerCase();return t.includes("ride")||t.includes("cycl");}),
+  run:acts.filter(a=>(a.sport_type||a.type||"").toLowerCase().includes("run")),
+});
+
+function mdToHtml(text){
+  return text.split("\n").map(line=>{
+    if(line.startsWith("## "))return`<h3>${line.slice(3)}</h3>`;
+    if(!line.trim())return"<br>";
+    const p=line.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+    if(/^[•\-]\s/.test(line))return`<li>${p.replace(/^[•\-]\s/,"")}</li>`;
+    return`<p>${p}</p>`;
+  }).join("");
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render(){
+  document.getElementById("app").innerHTML=S.screen==="setup"?renderSetup():renderDash();
+  if(S.screen==="dashboard"){
+    if(S.tab==="chat"){
+      scrollMsgs();
+      const ta=document.getElementById("cta");
+      if(ta){
+        ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(S.chatInput);}});
+        ta.addEventListener("input",e=>{S.chatInput=e.target.value;});
+      }
+    }
+  }
+}
+
+// ─── Setup Screen ─────────────────────────────────────────────────────────────
+function renderSetup(){return`
+<div class="screen" style="background:var(--bg);">
+  <div class="setup-wrap">
+    <div class="setup-logo">🏊🚴🏃</div>
+    <div class="setup-title">Triathlon Coach AI</div>
+    <div class="setup-sub">Dein persönlicher KI-Trainingscoach</div>
+    <div class="setup-card">
+      <div class="setup-welcome">👋 Hallo Klaus!</div>
+      <div class="setup-desc">Gib deine Keys einmalig ein – die App merkt sie sich automatisch.</div>
+      <div class="profile-mini">
+        <div class="profile-mini-title">✓ Dein Athletenprofil gespeichert</div>
+        <div class="profile-mini-grid">
+          <div class="profile-mini-item"><div class="profile-mini-label">Alter</div><div class="profile-mini-val">40–50 Jahre</div></div>
+          <div class="profile-mini-item"><div class="profile-mini-label">Erfahrung</div><div class="profile-mini-val">5+ Jahre</div></div>
+          <div class="profile-mini-item"><div class="profile-mini-label">Ziel</div><div class="profile-mini-val">Olympisch</div></div>
+          <div class="profile-mini-item"><div class="profile-mini-label">Steuerung</div><div class="profile-mini-val">HF+Watt+Pace</div></div>
+        </div>
+      </div>
+
+      <div class="key-section" style="background:#071018;border:1px solid #4fa3ff33;">
+        <div class="key-title" style="color:#4fa3ff;">🤖 Anthropic API Key</div>
+        <div class="key-hint" style="color:var(--text3);">Von <a href="https://console.anthropic.com" target="_blank" style="color:#4fa3ff;">console.anthropic.com</a> → API Keys → Create Key</div>
+        <input class="inp" type="password" inputmode="text" autocomplete="off" placeholder="sk-ant-..." value="${S.anthropicKey}" oninput="S.anthropicKey=this.value"/>
+      </div>
+
+      <div class="key-section" style="background:#071018;border:1px solid #fc4c0233;">
+        <div class="key-title" style="color:#fc4c02;">🟠 Strava Refresh Token</div>
+        <div class="key-hint" style="color:var(--text3);">Den Token den du im Terminal erhalten hast</div>
+        <input class="inp" type="password" inputmode="text" autocomplete="off" placeholder="6c06ebd8..." value="${S.refreshToken}" oninput="S.refreshToken=this.value"/>
+      </div>
+
+      ${S.error?`<div class="err-box">⚠️ ${S.error}</div>`:""}
+      <button class="btn-primary" onclick="connect()" ${S.loading?"disabled":""}>
+        ${S.loading?"⏳ Verbinde...":"Starten →"}
+      </button>
+      <div class="security-note">🔒 Deine Keys werden nur lokal auf diesem Gerät gespeichert – nirgendwo hochgeladen.</div>
+    </div>
+  </div>
+</div>`;}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function renderDash(){
+  const acts=S.activities.filter(isTri);
+  const d=disc(acts);
+  const ath=S.athlete;
+  const tabs=[
+    {id:"chat",icon:"💬",label:"Coach"},
+    {id:"activities",icon:"📊",label:"Training"},
+    {id:"goals",icon:"🎯",label:"Ziele"},
+    {id:"profile",icon:"👤",label:"Profil"},
+  ];
+  return`
+<div id="app-shell" style="display:flex;flex-direction:column;height:100vh;height:100dvh;">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <span class="header-emoji">🏊🚴🏃</span>
+      <div>
+        <div class="header-title">Triathlon Coach</div>
+        <div class="header-sub">${ath?`${ath.firstname} ${ath.lastname}`:"Klaus"} · <span style="color:#1e6a3a;">✓ Verbunden</span></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="doRefresh()" title="Neu laden">
+        <span style="display:inline-block;animation:${S.refreshing?"spin 1s linear infinite":"none"}">↻</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div style="padding:10px 14px 0;flex-shrink:0;">
+    <div class="stats-row">
+      ${[{l:"Schwimmen",a:d.swim,i:"🏊",c:"#4fa3ff"},{l:"Rad",a:d.bike,i:"🚴",c:"#00d4aa"},{l:"Laufen",a:d.run,i:"🏃",c:"#ff7b4f"}].map(({l,a,i,c})=>`
+      <div class="stat-card" style="border:1px solid ${c}28;">
+        <div class="stat-icon">${i}</div>
+        <div class="stat-num" style="color:${c};">${a.length}</div>
+        <div class="stat-label">${l}</div>
+        <div class="stat-dist">${fd(a.reduce((s,x)=>s+(x.distance||0),0))}</div>
+      </div>`).join("")}
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="main-content">
+    ${S.tab==="chat"?renderChat(acts):""}
+    ${S.tab==="activities"?renderActivities(acts):""}
+    ${S.tab==="goals"?renderGoals():""}
+    ${S.tab==="profile"?renderProfile():""}
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tabbar">
+    ${tabs.map(t=>`
+    <button class="tab-item ${S.tab===t.id?"active":""}" onclick="set({tab:'${t.id}'})">
+      <span class="tab-icon">${t.icon}</span>
+      <span class="tab-label" style="${S.tab===t.id?"color:var(--blue);":""}">${t.label}</span>
+    </button>`).join("")}
+  </div>
+  ${S.showGoalForm?renderGoalModal():""}
+</div>`;}
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+function renderChat(){
+  const showSug=S.msgs.length<=1;
+  const msgsHtml=S.msgs.map(m=>`
+    <div class="msg ${m.r}">
+      <div class="bubble">${m.r==="user"?m.t.replace(/\n/g,"<br>"):`<div>${mdToHtml(m.t)}</div>`}</div>
+      <div class="msg-time">${m.r==="coach"?"🤖 · ":"Du · "}${m.ts}</div>
+    </div>`).join("");
+  const typing=S.chatLoading?`<div class="typing-bubble"><div class="dots"><span></span><span></span><span></span></div></div>`:"";
+
+  return`
+  <div style="display:flex;flex-direction:column;height:100%;">
+    ${showSug?`<div class="suggestions">${SUGGESTIONS.map(s=>`<button class="suggestion" onclick="send('${s.replace(/'/g,"\\'")}');">${s}</button>`).join("")}</div>`:""}
+    <div id="msgs" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px;padding-bottom:12px;">
+      ${msgsHtml}${typing}
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;gap:8px;align-items:flex-end;">
+      <div id="cta" class="chat-ta" contenteditable="true" data-placeholder="Frag deinen Coach..." oninput="S.chatInput=this.innerText;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send(S.chatInput);this.innerText='';}" style="min-height:42px;"></div>
+      <button class="send-btn" onclick="const el=document.getElementById('cta');send(S.chatInput);el.innerText='';S.chatInput='';" ${S.chatLoading?"disabled":""}>
+        ${S.chatLoading?`<span style="animation:spin 1s linear infinite;display:inline-block;font-size:14px;">⌛</span>`:"➤"}
+      </button>
+    </div>
+  </div>`;}
+
+// ─── Activities ───────────────────────────────────────────────────────────────
+function renderActivities(acts){
+  if(!acts.length)return`<p style="color:var(--text3);text-align:center;padding:40px;">Keine Triathlon-Aktivitäten.</p>`;
+  return acts.map(a=>`
+    <div class="act-item">
+      <div class="act-icon">${icon(a.sport_type||a.type)}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="act-name">${a.name}</div>
+        <div class="act-meta">${fdate(a.start_date_local)} · ${slabel(a.sport_type||a.type)}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div class="act-dist">${fd(a.distance)}</div>
+        <div class="act-dur">${fdu(a.moving_time)}</div>
+        <div class="act-pace">${pace(a)}</div>
+        ${a.average_heartrate?`<div class="act-hr">❤ ${Math.round(a.average_heartrate)}</div>`:""}
+      </div>
+    </div>`).join("");}
+
+// ─── Goals ────────────────────────────────────────────────────────────────────
+function renderGoals(){
+  return`
+    <button class="add-goal-btn" onclick="set({showGoalForm:true})">+ Wettkampfziel hinzufügen</button>
+    ${S.goals.length===0?`<div style="text-align:center;padding:24px;color:var(--text3);"><div style="font-size:36px;margin-bottom:8px;">🎯</div><p style="font-size:13px;">Sprint · Olympisch · 70.3 · Ironman</p></div>`:""}
+    ${S.goals.map((g,gi)=>{
+      const f=FORMATS[g.format];
+      const w=g.date?Math.max(0,Math.round((new Date(g.date)-new Date())/(7*24*3600*1000))):null;
+      return`<div class="goal-card" style="border:1px solid ${f.color}40;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><span style="font-size:18px;">${f.emoji}</span><span style="font-weight:700;font-size:15px;">${g.name}</span></div>
+            <div style="color:${f.color};font-size:12px;font-weight:700;margin-bottom:8px;">${f.label}</div>
+            <div class="goal-dists">
+              ${[["🏊","swim"],["🚴","bike"],["🏃","run"]].map(([ic,k])=>`<div class="goal-dist-item" style="border:1px solid ${f.color}20;"><div style="font-size:13px;">${ic}</div><div style="color:${f.color};font-weight:700;font-size:12px;">${fd(f[k])}</div></div>`).join("")}
+            </div>
+            ${g.date?`<span class="goal-pill">📅 ${new Date(g.date).toLocaleDateString("de-DE")}${w!==null?`<span style="color:${w<=6?"#ff7b4f":"#00d4aa"};margin-left:5px;font-weight:700;">${w}W</span>`:""}</span>`:""}
+            ${g.targetTime?`<span class="goal-pill">⏱ ${g.targetTime}</span>`:""}
+            ${g.notes?`<div style="color:var(--text4);font-size:11px;margin-top:6px;font-style:italic;">"${g.notes}"</div>`:""}
+          </div>
+          <button onclick="S.goals.splice(${gi},1);set({})" style="background:none;border:none;color:var(--border);font-size:22px;cursor:pointer;padding:0 0 0 8px;">×</button>
+        </div>
+      </div>`;
+    }).join("")}
+    ${S.goals.length>0?`<button class="btn-primary" style="margin-top:8px;" onclick="send('Erstell mir bitte einen detaillierten Trainingsplan basierend auf meinen Wettkampfzielen.');set({tab:'chat'});">🤖 Trainingsplan im Chat →</button>`:""}
+  `;}
+
+// ─── Profile ─────────────────────────────────────────────────────────────────
+function renderProfile(){
+  return`<div>
+    <div style="background:var(--bg2);border:1px solid #00d4aa33;border-radius:14px;padding:16px;margin-bottom:12px;">
+      <div style="color:var(--accent);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;">👤 Dein Athletenprofil</div>
+      ${[["Alter",P.age],["Geschlecht",P.gender],["Erfahrung",P.exp],["Zieldistanz",P.dist],["Schwächste Disziplin",P.weak],["Trainingssteuerung",P.ctrl],["Erholung",P.rec],["Verletzungen",P.inj],["Ziele",P.goals],["Training",P.mode]].map(([k,v])=>`
+      <div class="profile-row"><div class="profile-key">${k}</div><div class="profile-val">${v}</div></div>`).join("")}
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;">
+      <div style="color:var(--text2);font-size:12px;font-weight:700;margin-bottom:10px;">🔑 Keys aktualisieren</div>
+      <span class="field-label" style="margin-top:0;">Anthropic API Key</span>
+      <input class="inp" type="password" placeholder="sk-ant-..." value="${S.anthropicKey}" oninput="S.anthropicKey=this.value;LS.set('ak',this.value);" style="margin-bottom:10px;"/>
+      <span class="field-label">Strava Refresh Token</span>
+      <input class="inp" type="password" placeholder="Refresh Token..." value="${S.refreshToken}" oninput="S.refreshToken=this.value;LS.set('rt',this.value);"/>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;">
+      <div style="color:var(--text2);font-size:12px;font-weight:700;margin-bottom:10px;">💬 Chat</div>
+      <button onclick="S.msgs=[{r:'coach',t:'Neuer Chat gestartet. Was möchtest du wissen?',ts:ts()}];set({tab:'chat'});" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:10px;padding:12px;cursor:pointer;font-size:14px;">🔄 Chat zurücksetzen</button>
+    </div>
+    <div style="height:40px;"></div>
+  </div>`;}
+
+// ─── Goal Modal ───────────────────────────────────────────────────────────────
+function renderGoalModal(){
+  const gf=S.gf; const f=FORMATS[gf.format];
+  return`<div class="modal-overlay" onclick="if(event.target===this)set({showGoalForm:false})">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">🎯 Wettkampfziel</div>
+      <span class="field-label" style="margin-top:0;">Name *</span>
+      <input class="inp" placeholder="z.B. Zürich Triathlon 2025" value="${gf.name}" oninput="S.gf.name=this.value" style="margin-bottom:12px;"/>
+      <span class="field-label">Format *</span>
+      <div class="format-grid">
+        ${Object.entries(FORMATS).map(([k,fm])=>`
+        <button class="format-btn" style="${gf.format===k?`background:${fm.color}18;border-color:${fm.color};`:""}" onclick="S.gf.format='${k}';set({showGoalForm:true})">
+          <div class="format-emoji">${fm.emoji}</div>
+          <div class="format-label" style="color:${gf.format===k?fm.color:"var(--text2)"};">${fm.label}</div>
+          <div class="format-desc">${fm.desc}</div>
+        </button>`).join("")}
+      </div>
+      <div class="dists-preview" style="border:1px solid ${f.color}33;">
+        ${[["🏊","swim"],["🚴","bike"],["🏃","run"]].map(([i,k])=>`<div><div style="font-size:16px;">${i}</div><div style="color:${f.color};font-weight:700;font-size:13px;">${fd(f[k])}</div></div>`).join("")}
+      </div>
+      <span class="field-label">Datum</span>
+      <input class="inp" type="date" value="${gf.date}" oninput="S.gf.date=this.value" style="margin-bottom:10px;"/>
+      <span class="field-label">Zielzeit (optional)</span>
+      <input class="inp" placeholder="z.B. 2:10:00" value="${gf.targetTime}" oninput="S.gf.targetTime=this.value" style="margin-bottom:10px;"/>
+      <span class="field-label">Notizen (optional)</span>
+      <textarea class="inp" rows="2" placeholder="z.B. Top 10 Altersklasse" oninput="S.gf.notes=this.value" style="margin-bottom:16px;">${gf.notes}</textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="set({showGoalForm:false})">Abbrechen</button>
+        <button class="btn-save" onclick="if(S.gf.name.trim()){S.goals.push({...S.gf,id:Date.now()});S.gf={name:'',format:'olympic',date:'',targetTime:'',notes:''};set({showGoalForm:false});}"
+          style="background:${gf.name.trim()?`linear-gradient(135deg,${f.color},#4fa3ff)`:"var(--border)"};color:${gf.name.trim()?"#000":"var(--text3)"};">
+          Speichern ✓
+        </button>
+      </div>
+    </div>
+  </div>`;}
+
+render();
+</script>
+</body>
+</html>
